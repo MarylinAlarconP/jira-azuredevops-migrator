@@ -651,7 +651,7 @@ namespace WorkItemImport
                         JsonPatchDocUtils.CreateJsonFieldPatchOp(Operation.Remove, key, null)
                     );
                 }
-                else
+                else if (!string.IsNullOrEmpty(key))
                 {
                     patchDocument.Add(
                         JsonPatchDocUtils.CreateJsonFieldPatchOp(Operation.Replace, key, val)

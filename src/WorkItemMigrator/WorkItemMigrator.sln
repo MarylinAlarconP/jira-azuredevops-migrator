@@ -3,15 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32421.90
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.WIContract", "Migration.WIContract\Migration.WIContract.csproj", "{19B3AF60-8BE6-47FC-9911-7829455B3557}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Migration.WIContract", "Migration.WIContract\Migration.WIContract.csproj", "{19B3AF60-8BE6-47FC-9911-7829455B3557}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "jira-export", "JiraExport\jira-export.csproj", "{600E6ED8-49FD-46F0-8498-ADEADAEBDF6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "jira-export", "JiraExport\jira-export.csproj", "{600E6ED8-49FD-46F0-8498-ADEADAEBDF6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.Common", "Migration.Common\Migration.Common.csproj", "{3D3E0FD1-05FC-454B-828A-9004D3DDB296}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Migration.Common", "Migration.Common\Migration.Common.csproj", "{3D3E0FD1-05FC-454B-828A-9004D3DDB296}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "wi-import", "WorkItemImport\wi-import.csproj", "{FE3852EF-A2A8-45B7-8598-CA9400D7F60B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "wi-import", "WorkItemImport\wi-import.csproj", "{FE3852EF-A2A8-45B7-8598-CA9400D7F60B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.Common.Log", "Migration.Common.Log\Migration.Common.Log.csproj", "{87DF777C-D3CB-4B0B-8552-159247B1F022}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Migration.Common.Log", "Migration.Common.Log\Migration.Common.Log.csproj", "{87DF777C-D3CB-4B0B-8552-159247B1F022}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{EBEF05DA-E3C1-49DA-A411-2669F8C34BDC}"
 EndProject
@@ -22,6 +22,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Migration.WIContract.Tests", "tests\Migration.WIContract.Tests\Migration.WIContract.Tests.csproj", "{48F7CF75-95DA-49D4-9267-129D8D7EFB4C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Migration.Wi-Import.Tests", "tests\Migration.Wi-Import.Tests\Migration.Wi-Import.Tests.csproj", "{98407853-4CF6-4665-88CC-D92ECEBDBB95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ma-links", "ma-links\ma-links.csproj", "{8B615C2F-A076-4B47-91EB-4A1056543CFA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,6 +67,10 @@ Global
 		{98407853-4CF6-4665-88CC-D92ECEBDBB95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{98407853-4CF6-4665-88CC-D92ECEBDBB95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{98407853-4CF6-4665-88CC-D92ECEBDBB95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B615C2F-A076-4B47-91EB-4A1056543CFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B615C2F-A076-4B47-91EB-4A1056543CFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B615C2F-A076-4B47-91EB-4A1056543CFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B615C2F-A076-4B47-91EB-4A1056543CFA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
