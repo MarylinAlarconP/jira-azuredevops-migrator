@@ -578,7 +578,7 @@ SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{p.AdoProject}' 
 
                 using var doc = JsonDocument.Parse(await res.Content.ReadAsStringAsync().ConfigureAwait(false));
                 var root = doc.RootElement;
-                bool isLast = false;
+               
                 foreach (var issue in root.GetProperty("issues").EnumerateArray())
                 {
                     var currentKey = issue.GetProperty("key").GetString() ?? "";
@@ -588,112 +588,160 @@ SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = '{p.AdoProject}' 
                     // OPTIONAL: filter sources by migrated flag
                     if (issue.TryGetProperty("fields", out var fields))
                     {
-                        if (fields.TryGetProperty("customfield_10893", out var mig) && mig.ValueKind != JsonValueKind.Null)
+
+                        // If the field is missing/null, treat as not migrated
+                        //continue;
+
+                        if (fields.TryGetProperty("parent", out var parent) &&
+                                        parent.TryGetProperty("key", out var parentKey) &&
+                                        parentKey.ValueKind != JsonValueKind.Null)
                         {
-                            var migVal = mig.GetString() ?? "";
-                            if (!migVal.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+
+                            var targetKey = parentKey.GetString();
+                            if (!string.IsNullOrWhiteSpace(targetKey))
+                                rels.Add(new issueRelation(currentKey, targetKey!, "Parent", "outward"));
+                        }
+
+
+                        if (fields.TryGetProperty("issuelinks", out var linksEl) && linksEl.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (var link in linksEl.EnumerateArray())
                             {
-                                if (fields.TryGetProperty("parent", out var parent) &&
-                                            parent.TryGetProperty("key", out var parentKey) &&
-                                            parentKey.ValueKind != JsonValueKind.Null)
+                                var typeName = "";
+                                if (link.TryGetProperty("type", out var typeEl) &&
+                                    typeEl.TryGetProperty("name", out var nameEl) &&
+                                    nameEl.ValueKind != JsonValueKind.Null)
                                 {
-                                    
-                                    var targetKey = parentKey.GetString();
+                                    typeName = nameEl.GetString() ?? "";
+                                }
+
+                                // outwardIssue: current -> outward
+                                if (link.TryGetProperty("outwardIssue", out var outward) &&
+                                    outward.TryGetProperty("key", out var outKeyEl) &&
+                                    outKeyEl.ValueKind != JsonValueKind.Null)
+                                {
+                                    var targetKey = outKeyEl.GetString();
                                     if (!string.IsNullOrWhiteSpace(targetKey))
-                                        rels.Add(new issueRelation(currentKey, targetKey!, "Parent", "outward"));
+                                        rels.Add(new issueRelation(currentKey, targetKey!, typeName, "outward"));
                                 }
 
-                                if (fields.TryGetProperty("issuelinks", out var linksEl) && linksEl.ValueKind == JsonValueKind.Array)
+                                // inwardIssue: inward -> current
+                                if (link.TryGetProperty("inwardIssue", out var inward) &&
+                                    inward.TryGetProperty("key", out var inKeyEl) &&
+                                    inKeyEl.ValueKind != JsonValueKind.Null)
                                 {
-                                    foreach (var link in linksEl.EnumerateArray())
-                                    {
-                                        var typeName = "";
-                                        if (link.TryGetProperty("type", out var typeEl) &&
-                                            typeEl.TryGetProperty("name", out var nameEl) &&
-                                            nameEl.ValueKind != JsonValueKind.Null)
-                                        {
-                                            typeName = nameEl.GetString() ?? "";
-                                        }
-
-                                        // parent: current -> parent
-                                        
-
-                                        // outwardIssue: current -> outward
-                                        if (link.TryGetProperty("outwardIssue", out var outward) &&
-                                            outward.TryGetProperty("key", out var outKeyEl) &&
-                                            outKeyEl.ValueKind != JsonValueKind.Null)
-                                        {
-                                            var targetKey = outKeyEl.GetString();
-                                            if (!string.IsNullOrWhiteSpace(targetKey))
-                                                rels.Add(new issueRelation(currentKey, targetKey!, typeName, "outward"));
-                                        }
-
-                                        // inwardIssue: inward -> current
-                                        if (link.TryGetProperty("inwardIssue", out var inward) &&
-                                            inward.TryGetProperty("key", out var inKeyEl) &&
-                                            inKeyEl.ValueKind != JsonValueKind.Null)
-                                        {
-                                            var sourceKey = inKeyEl.GetString();
-                                            if (!string.IsNullOrWhiteSpace(sourceKey))
-                                                rels.Add(new issueRelation(sourceKey!, currentKey, typeName, "inward"));
-                                        }
-                                    }
+                                    var sourceKey = inKeyEl.GetString();
+                                    if (!string.IsNullOrWhiteSpace(sourceKey))
+                                        rels.Add(new issueRelation(sourceKey!, currentKey, typeName, "inward"));
                                 }
                             }
-
                         }
-                        else
-                        {
-                            // If the field is missing/null, treat as not migrated
-                            //continue;
+                        //if (fields.TryGetProperty("customfield_10893", out var mig) && mig.ValueKind != JsonValueKind.Null)
+                        //{
+                        //    var migVal = mig.GetString() ?? "";
+                        //    if (!migVal.Equals("Yes", StringComparison.OrdinalIgnoreCase))
+                        //    {
+                        //        if (fields.TryGetProperty("parent", out var parent) &&
+                        //                    parent.TryGetProperty("key", out var parentKey) &&
+                        //                    parentKey.ValueKind != JsonValueKind.Null)
+                        //        {
 
-                            if (fields.TryGetProperty("parent", out var parent) &&
-                                            parent.TryGetProperty("key", out var parentKey) &&
-                                            parentKey.ValueKind != JsonValueKind.Null)
-                            {
+                        //            var targetKey = parentKey.GetString();
+                        //            if (!string.IsNullOrWhiteSpace(targetKey))
+                        //                rels.Add(new issueRelation(currentKey, targetKey!, "Parent", "outward"));
+                        //        }
 
-                                var targetKey = parentKey.GetString();
-                                if (!string.IsNullOrWhiteSpace(targetKey))
-                                    rels.Add(new issueRelation(currentKey, targetKey!, "Parent", "outward"));
-                            }
+                        //        if (fields.TryGetProperty("issuelinks", out var linksEl) && linksEl.ValueKind == JsonValueKind.Array)
+                        //        {
+                        //            foreach (var link in linksEl.EnumerateArray())
+                        //            {
+                        //                var typeName = "";
+                        //                if (link.TryGetProperty("type", out var typeEl) &&
+                        //                    typeEl.TryGetProperty("name", out var nameEl) &&
+                        //                    nameEl.ValueKind != JsonValueKind.Null)
+                        //                {
+                        //                    typeName = nameEl.GetString() ?? "";
+                        //                }
 
-
-                            if (fields.TryGetProperty("issuelinks", out var linksEl) && linksEl.ValueKind == JsonValueKind.Array)
-                            {
-                                foreach (var link in linksEl.EnumerateArray())
-                                {
-                                    var typeName = "";
-                                    if (link.TryGetProperty("type", out var typeEl) &&
-                                        typeEl.TryGetProperty("name", out var nameEl) &&
-                                        nameEl.ValueKind != JsonValueKind.Null)
-                                    {
-                                        typeName = nameEl.GetString() ?? "";
-                                    }
-
-                                    // outwardIssue: current -> outward
-                                    if (link.TryGetProperty("outwardIssue", out var outward) &&
-                                        outward.TryGetProperty("key", out var outKeyEl) &&
-                                        outKeyEl.ValueKind != JsonValueKind.Null)
-                                    {
-                                        var targetKey = outKeyEl.GetString();
-                                        if (!string.IsNullOrWhiteSpace(targetKey))
-                                            rels.Add(new issueRelation(currentKey, targetKey!, typeName, "outward"));
-                                    }
-
-                                    // inwardIssue: inward -> current
-                                    if (link.TryGetProperty("inwardIssue", out var inward) &&
-                                        inward.TryGetProperty("key", out var inKeyEl) &&
-                                        inKeyEl.ValueKind != JsonValueKind.Null)
-                                    {
-                                        var sourceKey = inKeyEl.GetString();
-                                        if (!string.IsNullOrWhiteSpace(sourceKey))
-                                            rels.Add(new issueRelation(sourceKey!, currentKey, typeName, "inward"));
-                                    }
-                                }
-                            }
+                        //                // parent: current -> parent
 
 
-                        }
+                        //                // outwardIssue: current -> outward
+                        //                if (link.TryGetProperty("outwardIssue", out var outward) &&
+                        //                    outward.TryGetProperty("key", out var outKeyEl) &&
+                        //                    outKeyEl.ValueKind != JsonValueKind.Null)
+                        //                {
+                        //                    var targetKey = outKeyEl.GetString();
+                        //                    if (!string.IsNullOrWhiteSpace(targetKey))
+                        //                        rels.Add(new issueRelation(currentKey, targetKey!, typeName, "outward"));
+                        //                }
+
+                        //                // inwardIssue: inward -> current
+                        //                if (link.TryGetProperty("inwardIssue", out var inward) &&
+                        //                    inward.TryGetProperty("key", out var inKeyEl) &&
+                        //                    inKeyEl.ValueKind != JsonValueKind.Null)
+                        //                {
+                        //                    var sourceKey = inKeyEl.GetString();
+                        //                    if (!string.IsNullOrWhiteSpace(sourceKey))
+                        //                        rels.Add(new issueRelation(sourceKey!, currentKey, typeName, "inward"));
+                        //                }
+                        //            }
+                        //        }
+                        //    }
+
+                        //}
+                        //else
+                        //{
+                        //    // If the field is missing/null, treat as not migrated
+                        //    //continue;
+
+                        //    if (fields.TryGetProperty("parent", out var parent) &&
+                        //                    parent.TryGetProperty("key", out var parentKey) &&
+                        //                    parentKey.ValueKind != JsonValueKind.Null)
+                        //    {
+
+                        //        var targetKey = parentKey.GetString();
+                        //        if (!string.IsNullOrWhiteSpace(targetKey))
+                        //            rels.Add(new issueRelation(currentKey, targetKey!, "Parent", "outward"));
+                        //    }
+
+
+                        //    if (fields.TryGetProperty("issuelinks", out var linksEl) && linksEl.ValueKind == JsonValueKind.Array)
+                        //    {
+                        //        foreach (var link in linksEl.EnumerateArray())
+                        //        {
+                        //            var typeName = "";
+                        //            if (link.TryGetProperty("type", out var typeEl) &&
+                        //                typeEl.TryGetProperty("name", out var nameEl) &&
+                        //                nameEl.ValueKind != JsonValueKind.Null)
+                        //            {
+                        //                typeName = nameEl.GetString() ?? "";
+                        //            }
+
+                        //            // outwardIssue: current -> outward
+                        //            if (link.TryGetProperty("outwardIssue", out var outward) &&
+                        //                outward.TryGetProperty("key", out var outKeyEl) &&
+                        //                outKeyEl.ValueKind != JsonValueKind.Null)
+                        //            {
+                        //                var targetKey = outKeyEl.GetString();
+                        //                if (!string.IsNullOrWhiteSpace(targetKey))
+                        //                    rels.Add(new issueRelation(currentKey, targetKey!, typeName, "outward"));
+                        //            }
+
+                        //            // inwardIssue: inward -> current
+                        //            if (link.TryGetProperty("inwardIssue", out var inward) &&
+                        //                inward.TryGetProperty("key", out var inKeyEl) &&
+                        //                inKeyEl.ValueKind != JsonValueKind.Null)
+                        //            {
+                        //                var sourceKey = inKeyEl.GetString();
+                        //                if (!string.IsNullOrWhiteSpace(sourceKey))
+                        //                    rels.Add(new issueRelation(sourceKey!, currentKey, typeName, "inward"));
+                        //            }
+                        //        }
+                        //    }
+
+
+                        //}
                     }
 
 
