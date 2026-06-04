@@ -76,4 +76,43 @@ public class AdoWriterTests
         Assert.That(outcome.Failures.Single().ItemKey, Is.EqualTo("PROJ-3"));
         Directory.Delete(root, true);
     }
+
+    [Test]
+    public void Write_DoesNotDuplicateAuthorAndDateIntoFields()
+    {
+        // Transformer puts CreatedBy/CreatedDate into rev.Fields; the writer carries them
+        // via the dedicated request properties, so they must NOT also appear in request.Fields
+        // (a duplicate /fields/System.CreatedBy patch path makes ADO reject the create).
+        var (store, root) = NewStore();
+        var ado = new FakeAdoClient();
+        var created = new System.DateTime(2023, 1, 2, 3, 4, 5);
+        var item = Item("PROJ-4");
+        item.Revisions[0].Fields.Add(new WiField { ReferenceName = WiFieldReference.CreatedBy, Value = "Rep <rep@ado>" });
+        item.Revisions[0].Fields.Add(new WiField { ReferenceName = WiFieldReference.CreatedDate, Value = created });
+
+        new AdoWriter(ado).Write(item, store, store.LoadState(), new WriteOutcome(), CancellationToken.None);
+
+        var req = ado.Created.Single();
+        Assert.That(req.CreatedBy, Is.EqualTo("Rep <rep@ado>"));
+        Assert.That(req.CreatedDate, Is.EqualTo(created));
+        Assert.That(req.Fields.ContainsKey(WiFieldReference.CreatedBy), Is.False);
+        Assert.That(req.Fields.ContainsKey(WiFieldReference.CreatedDate), Is.False);
+        Directory.Delete(root, true);
+    }
+
+    [Test]
+    public void Write_SkipsWhenStateAlreadyWritten()
+    {
+        var (store, root) = NewStore();
+        var ado = new FakeAdoClient();
+        var state = store.LoadState();
+        state.RecordWritten("PROJ-5", 42);
+        var outcome = new WriteOutcome();
+
+        new AdoWriter(ado).Write(Item("PROJ-5"), store, state, outcome, CancellationToken.None);
+
+        Assert.That(outcome.Skipped, Is.EqualTo(1));
+        Assert.That(ado.Created, Is.Empty);
+        Directory.Delete(root, true);
+    }
 }

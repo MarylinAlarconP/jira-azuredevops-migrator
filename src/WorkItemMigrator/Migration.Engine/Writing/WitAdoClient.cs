@@ -55,7 +55,9 @@ public sealed class WitAdoClient : IAdoClient
                 bypassRules: true,
                 suppressNotifications: true).GetAwaiter().GetResult();
             var newId = created.Id ?? -1;
-            if (newId > 0 && request.AttachmentPaths.Count > 0)
+            if (newId <= 0)
+                throw new AdoRejectedException($"ADO returned no work-item id for {request.LegacyId}");
+            if (request.AttachmentPaths.Count > 0)
                 UploadAttachments(newId, request.AttachmentPaths);
             return newId;
         }

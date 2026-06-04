@@ -35,6 +35,9 @@ public sealed class AdoWriter : IAdoWriter
         foreach (var f in rev.Fields)
         {
             if (f.ReferenceName == WiFieldReference.History) { request.CommentHtml.Add(f.Value?.ToString() ?? ""); continue; }
+            // CreatedBy/CreatedDate are carried via the dedicated request properties; emitting
+            // them here too would produce duplicate /fields patch paths that ADO rejects.
+            if (f.ReferenceName == WiFieldReference.CreatedBy || f.ReferenceName == WiFieldReference.CreatedDate) continue;
             if (f.Value != null) request.Fields[f.ReferenceName] = f.Value;
         }
         foreach (var att in rev.Attachments)
