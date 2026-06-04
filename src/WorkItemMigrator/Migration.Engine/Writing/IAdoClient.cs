@@ -22,6 +22,9 @@ public interface IAdoClient
     int CreateWorkItem(AdoCreateRequest request);
 
     int CountByLegacyIds(IEnumerable<string> legacyIds);
+
+    // creates an ADO relation from source to target; returns true if created, false if it already existed
+    bool AddRelation(int sourceId, int targetId, string adoRelationReferenceName);
 }
 
 public sealed class AdoRejectedException : System.Exception

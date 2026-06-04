@@ -89,4 +89,28 @@ public sealed class WitAdoClient : IAdoClient
 
     public int CountByLegacyIds(IEnumerable<string> legacyIds) =>
         legacyIds.Distinct().Sum(k => FindByLegacyId(k).Count);
+
+    public bool AddRelation(int sourceId, int targetId, string adoRelationReferenceName)
+    {
+        var target = _wit.GetWorkItemAsync(targetId).GetAwaiter().GetResult();
+        var targetUrl = target.Url;
+
+        var source = _wit.GetWorkItemAsync(sourceId, expand: WorkItemExpand.All).GetAwaiter().GetResult();
+        var alreadyExists = source.Relations != null && source.Relations.Any(r =>
+            r.Rel == adoRelationReferenceName && r.Url == targetUrl);
+        if (alreadyExists)
+            return false;
+
+        var patch = new JsonPatchDocument
+        {
+            new JsonPatchOperation
+            {
+                Operation = Operation.Add,
+                Path = "/relations/-",
+                Value = new { rel = adoRelationReferenceName, url = targetUrl }
+            }
+        };
+        _wit.UpdateWorkItemAsync(patch, sourceId, bypassRules: true).GetAwaiter().GetResult();
+        return true;
+    }
 }

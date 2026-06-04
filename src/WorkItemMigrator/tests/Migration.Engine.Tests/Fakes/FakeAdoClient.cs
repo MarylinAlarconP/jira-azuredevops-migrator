@@ -28,4 +28,14 @@ public sealed class FakeAdoClient : IAdoClient
 
     public int CountByLegacyIds(IEnumerable<string> legacyIds) =>
         legacyIds.Sum(k => Existing.TryGetValue(k, out var l) ? l.Count : 0);
+
+    public List<(int Source, int Target, string Rel)> Relations { get; } = new();
+
+    public bool AddRelation(int sourceId, int targetId, string adoRelationReferenceName)
+    {
+        if (Relations.Any(r => r.Source == sourceId && r.Target == targetId && r.Rel == adoRelationReferenceName))
+            return false;
+        Relations.Add((sourceId, targetId, adoRelationReferenceName));
+        return true;
+    }
 }
