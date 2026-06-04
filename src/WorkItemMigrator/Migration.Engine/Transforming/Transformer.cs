@@ -24,8 +24,38 @@ public sealed class Transformer : ITransformer
         if (titleRule != null && issue.Fields.TryGetValue(titleRule.SourceName, out var title))
             rev.Fields.Add(new WiField { ReferenceName = WiFieldReference.Title, Value = title });
 
+        // generic fields (skip MapTitle handled above and user/comment mappers handled elsewhere)
+        foreach (var rule in profile.Fields)
+        {
+            if (rule.Mapper is "MapTitle" or "MapUser" or "MapToComments") continue;
+            if (!issue.Fields.TryGetValue(rule.SourceName, out var raw)) continue;
+            var mapped = profile.MapValue(rule.Target, raw);
+            rev.Fields.Add(new WiField { ReferenceName = rule.Target, Value = mapped });
+        }
+
+        // author + created date (created-by resolved against the user map)
+        var resolved = ResolveUser(issue.ReporterEmail, profile, out var matched);
+        rev.Author = resolved;
+        rev.Fields.Add(new WiField { ReferenceName = WiFieldReference.CreatedBy, Value = resolved });
+        rev.Fields.Add(new WiField { ReferenceName = WiFieldReference.CreatedDate, Value = issue.Created });
+        var unmatched = matched ? null : issue.ReporterEmail;
+
         var item = new WiItem { Type = adoType, OriginId = issue.Key };
         item.Revisions = new System.Collections.Generic.List<WiRevision> { rev };
-        return new TransformResult { Item = item };
+
+        var result = new TransformResult { Item = item };
+        if (unmatched != null) result.UnmatchedUsers.Add(unmatched);
+        return result;
+    }
+
+    private static string ResolveUser(string email, MappingProfile profile, out bool matched)
+    {
+        if (!string.IsNullOrWhiteSpace(email) && profile.Users.EmailToAdo.TryGetValue(email, out var ado))
+        {
+            matched = true;
+            return ado;
+        }
+        matched = false;
+        return profile.Users.Fallback;
     }
 }
