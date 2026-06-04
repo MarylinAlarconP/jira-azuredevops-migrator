@@ -68,7 +68,6 @@ public sealed class MigrationEngine
         foreach (var raw in store.EnumerateRawIssues())
         {
             ct.ThrowIfCancellationRequested();
-            legacyIds.Add(raw.Key);
             var tr = _transformer.Transform(raw, profile, request);
             unmatched.AddRange(tr.UnmatchedUsers);
 
@@ -78,6 +77,11 @@ public sealed class MigrationEngine
                 reporter.Report(MigrationStage.Transforming, raw.Key, tr.SkipReason ?? "skipped");
                 continue;
             }
+
+            // Only migrated items belong to the reconciliation set; transform-skipped
+            // (e.g. unmapped-type) keys are excluded from PresentCount, so including them
+            // here would skew AdoCountForLegacySet and cause a spurious mismatch.
+            legacyIds.Add(raw.Key);
 
             if (request.DryRun) { outcome.Created++; continue; }
 

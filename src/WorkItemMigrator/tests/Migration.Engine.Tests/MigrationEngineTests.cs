@@ -95,4 +95,27 @@ public class MigrationEngineTests
         Assert.That(ex!.Message, Does.Contain("Custom.LegacyID"));
         Directory.Delete(root, true);
     }
+
+    [Test]
+    public void RunMigration_UnmappedKeyPresentInAdo_DoesNotSkewReconciliation()
+    {
+        // An unmapped-type issue is transform-skipped (not migrated). Even if a work item
+        // with that LegacyID already exists in ADO (from another level/job), it must not be
+        // counted in AdoCountForLegacySet, so reconciliation stays consistent.
+        var jira = new FakeJiraClient();
+        jira.Issues.Add(new RawIssue { Key = "PROJ-1", IssueType = "Story", Fields = { ["summary"] = "A" } });
+        jira.Issues.Add(new RawIssue { Key = "PROJ-9", IssueType = "Epic" }); // unmapped at this level
+
+        var (engine, ado, root) = Build(jira);
+        ado.Existing["PROJ-9"] = new() { 999 }; // pre-existing in ADO from elsewhere
+        var request = new JobRequest { JobId = "job1", WorkspaceRoot = root, Jql = "x", ProfilePath = "p" };
+
+        var report = engine.RunMigration(request, null, CancellationToken.None);
+
+        Assert.That(report.UnmappedType, Is.EquivalentTo(new[] { "PROJ-9" }));
+        Assert.That(report.Created, Is.EqualTo(1));            // only PROJ-1 migrated
+        Assert.That(report.AdoCountForLegacySet, Is.EqualTo(1)); // PROJ-9's stray item excluded
+        Assert.That(report.ReconciliationMismatch, Is.False);
+        Directory.Delete(root, true);
+    }
 }
