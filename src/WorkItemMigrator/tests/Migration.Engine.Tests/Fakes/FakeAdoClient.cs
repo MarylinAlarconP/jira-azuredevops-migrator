@@ -38,4 +38,14 @@ public sealed class FakeAdoClient : IAdoClient
         Relations.Add((sourceId, targetId, adoRelationReferenceName));
         return true;
     }
+
+    public HashSet<string> Fields { get; } = new() { "Custom.LegacyID" };
+    public HashSet<string> Types { get; } = new() { "User Story", "Feature", "Epic", "Task", "Bug" };
+    public HashSet<string> AreaPaths { get; } = new();
+    public HashSet<string> IterationPaths { get; } = new();
+
+    public bool FieldExists(string referenceName) => Fields.Contains(referenceName);
+    public bool TypeExists(string workItemType) => Types.Contains(workItemType);
+    public bool PathExists(string classification, string path) =>
+        (classification == "area" ? AreaPaths : IterationPaths).Contains(path);
 }

@@ -25,6 +25,11 @@ public interface IAdoClient
 
     // creates an ADO relation from source to target; returns true if created, false if it already existed
     bool AddRelation(int sourceId, int targetId, string adoRelationReferenceName);
+
+    // target metadata checks used by the readiness pre-flight
+    bool FieldExists(string referenceName);
+    bool TypeExists(string workItemType);
+    bool PathExists(string classification, string path); // classification: "area" or "iteration"
 }
 
 public sealed class AdoRejectedException : System.Exception

@@ -113,4 +113,31 @@ public sealed class WitAdoClient : IAdoClient
         _wit.UpdateWorkItemAsync(patch, sourceId, bypassRules: true).GetAwaiter().GetResult();
         return true;
     }
+
+    public bool FieldExists(string referenceName)
+    {
+        try { _wit.GetFieldAsync(_project, referenceName).GetAwaiter().GetResult(); return true; }
+        catch { return false; }
+    }
+
+    public bool TypeExists(string workItemType)
+    {
+        var types = _wit.GetWorkItemTypesAsync(_project).GetAwaiter().GetResult();
+        return types.Any(t => string.Equals(t.Name, workItemType, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public bool PathExists(string classification, string path)
+    {
+        var structure = classification == "area"
+            ? TreeStructureGroup.Areas : TreeStructureGroup.Iterations;
+        // strip the leading "<Project>\" prefix to get the node path the API expects
+        var nodePath = path.Contains('\\') ? path.Substring(path.IndexOf('\\') + 1) : "";
+        try
+        {
+            _wit.GetClassificationNodeAsync(_project, structure, nodePath, depth: 0)
+                .GetAwaiter().GetResult();
+            return true;
+        }
+        catch { return false; }
+    }
 }
