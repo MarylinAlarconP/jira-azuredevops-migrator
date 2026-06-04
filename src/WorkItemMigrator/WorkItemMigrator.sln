@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.Engine", "Migrati
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.Engine.Tests", "tests\Migration.Engine.Tests\Migration.Engine.Tests.csproj", "{2710DEFB-8C5D-4443-B885-D40E70EB0A07}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migration.Engine.Cli", "Migration.Engine.Cli\Migration.Engine.Cli.csproj", "{FECFB629-9C0D-4B7E-8B05-431D6613E263}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,18 @@ Global
 		{2710DEFB-8C5D-4443-B885-D40E70EB0A07}.Release|x64.Build.0 = Release|Any CPU
 		{2710DEFB-8C5D-4443-B885-D40E70EB0A07}.Release|x86.ActiveCfg = Release|Any CPU
 		{2710DEFB-8C5D-4443-B885-D40E70EB0A07}.Release|x86.Build.0 = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|x64.Build.0 = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Debug|x86.Build.0 = Debug|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|x64.ActiveCfg = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|x64.Build.0 = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|x86.ActiveCfg = Release|Any CPU
+		{FECFB629-9C0D-4B7E-8B05-431D6613E263}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
