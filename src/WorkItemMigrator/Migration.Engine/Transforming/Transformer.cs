@@ -40,6 +40,22 @@ public sealed class Transformer : ITransformer
         rev.Fields.Add(new WiField { ReferenceName = WiFieldReference.CreatedDate, Value = issue.Created });
         var unmatched = matched ? null : issue.ReporterEmail;
 
+        foreach (var c in issue.Comments)
+            rev.Fields.Add(new WiField
+            {
+                ReferenceName = WiFieldReference.History,
+                Value = $"<b>{c.Author} ({c.Created:u}):</b> {c.Body}"
+            });
+
+        foreach (var a in issue.Attachments)
+            rev.Attachments.Add(new WiAttachment
+            {
+                Change = ReferenceChangeType.Added,
+                AttOriginId = a.Id,
+                FilePath = a.FileName,
+                Comment = ""
+            });
+
         var item = new WiItem { Type = adoType, OriginId = issue.Key };
         item.Revisions = new System.Collections.Generic.List<WiRevision> { rev };
 
