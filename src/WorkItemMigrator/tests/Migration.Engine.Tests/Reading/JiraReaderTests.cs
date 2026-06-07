@@ -34,4 +34,33 @@ public class JiraReaderTests
 
         Directory.Delete(root, true);
     }
+
+    [Test]
+    public void Read_SkipsFailedAttachment_AndContinues()
+    {
+        var root = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var store = new FileSystemStageStore(root, "job1");
+        var client = new FakeJiraClient();
+        client.Issues.Add(new RawIssue
+        {
+            Key = "PROJ-1",
+            Attachments =
+            {
+                new RawAttachment { Id = "100", FileName = "good.png" },
+                new RawAttachment { Id = "200", FileName = "bad.png" }
+            }
+        });
+        client.FailingAttachmentIds.Add("200");
+
+        var reader = new JiraReader(client);
+        var count = reader.Read(new JobRequest { Jql = "project=PROJ" }, store,
+            new RecordingProgress(), CancellationToken.None);
+
+        Assert.That(count, Is.EqualTo(1));
+        Assert.That(store.EnumerateRawIssues().Single().Key, Is.EqualTo("PROJ-1"));
+        Assert.That(File.Exists(Path.Combine(store.AttachmentPath("100"), "good.png")), Is.True);
+        Assert.That(File.Exists(Path.Combine(store.AttachmentPath("200"), "bad.png")), Is.False);
+
+        Directory.Delete(root, true);
+    }
 }

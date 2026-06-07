@@ -17,8 +17,16 @@ public sealed class JiraReader : IJiraReader
             ct.ThrowIfCancellationRequested();
             foreach (var att in issue.Attachments)
             {
-                var bytes = _client.DownloadAttachment(att);
-                store.SaveAttachment(att.Id, bytes, att.FileName);
+                try
+                {
+                    var bytes = _client.DownloadAttachment(att);
+                    store.SaveAttachment(att.Id, bytes, att.FileName);
+                }
+                catch (System.Exception ex)
+                {
+                    progress.Report(MigrationStage.Reading, issue.Key,
+                        $"skipped attachment {att.Id}: {ex.Message}");
+                }
             }
             store.SaveRawIssue(issue);
             count++;
