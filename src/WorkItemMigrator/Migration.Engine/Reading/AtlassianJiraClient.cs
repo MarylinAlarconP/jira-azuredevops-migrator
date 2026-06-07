@@ -56,6 +56,22 @@ public sealed class AtlassianJiraClient : IJiraClient
         foreach (var field in issue.CustomFields)
             raw.Fields[field.Name] = field.Values != null ? string.Join(", ", field.Values) : "";
 
+        // Standard system fields. Only add when the SDK value is non-empty, and never
+        // overwrite a custom field already captured under the same canonical key.
+        void AddSystemField(string key, string? value)
+        {
+            if (!string.IsNullOrEmpty(value) && !raw.Fields.ContainsKey(key))
+                raw.Fields[key] = value;
+        }
+
+        AddSystemField("summary", issue.Summary);
+        AddSystemField("description", issue.Description);
+        AddSystemField("assignee", issue.Assignee);
+        AddSystemField("priority", issue.Priority?.Name);
+        AddSystemField("status", issue.Status?.Name);
+        AddSystemField("labels", issue.Labels != null ? string.Join(", ", issue.Labels) : null);
+        AddSystemField("timeestimate", issue.TimeTrackingData?.RemainingEstimate);
+
         foreach (var comment in issue.GetCommentsAsync().GetAwaiter().GetResult())
             raw.Comments.Add(new RawComment
             {
