@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Atlassian.Jira;
+using Migration.Common;
+using Newtonsoft.Json.Linq;
+using RestSharp;
 
 namespace Migration.Engine.Reading;
 
@@ -34,13 +37,16 @@ public sealed class AtlassianJiraClient : IJiraClient
 
     public byte[] DownloadAttachment(RawAttachment attachment)
     {
-        // Atlassian.SDK's Attachment type exposes no content URL, so Map leaves
-        // RawAttachment.ContentUrl empty. The real download must go through the
-        // REST endpoint attachment/{id} (as the legacy exporter does). Until that
-        // is wired (harness phase), fail loud rather than throw an opaque empty-URI
-        // error. See plan phase-13 deferred notes.
-        throw new NotImplementedException(
-            "AtlassianJiraClient.DownloadAttachment is not yet wired to the REST attachment endpoint.");
+        // Atlassian.SDK's Attachment type exposes no content URL, so resolve the
+        // absolute download URL through the REST attachment/{id} endpoint (mirrors
+        // legacy JiraProvider.GetAttachmentInfo reading $.content), then fetch the
+        // bytes via the same low-level RestClient.DownloadData the exporter uses.
+        // API version 2 works on both Jira Cloud and Server/DC.
+        var response = _jira.RestClient
+            .ExecuteRequestAsync(Method.GET, $"rest/api/2/attachment/{attachment.Id}")
+            .GetAwaiter().GetResult();
+        var contentUrl = ((JObject)response).ExValue<string>("$.content");
+        return _jira.RestClient.DownloadData(contentUrl);
     }
 
     private static RawIssue Map(Issue issue)
