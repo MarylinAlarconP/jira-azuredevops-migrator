@@ -76,11 +76,22 @@ public sealed class WitAdoClient : IAdoClient
             using var stream = System.IO.File.OpenRead(path);
             var reference = _wit.CreateAttachmentAsync(stream, System.IO.Path.GetFileName(path), null, null, null, new CancellationToken())
                 .GetAwaiter().GetResult();
+            // On-disk layout is attachments/{originalId}/{fileName}, so the parent
+            // directory name is the original Jira attachment id; fall back to the file
+            // name if that id is not cleanly recoverable.
+            var originalId = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(path));
+            if (string.IsNullOrEmpty(originalId))
+                originalId = System.IO.Path.GetFileName(path);
             patch.Add(new JsonPatchOperation
             {
                 Operation = Operation.Add,
                 Path = "/relations/-",
-                Value = new { rel = "AttachedFile", url = reference.Url }
+                Value = new
+                {
+                    rel = "AttachedFile",
+                    url = reference.Url,
+                    attributes = new { comment = $"original ID: {originalId}" }
+                }
             });
         }
         if (patch.Count > 0)
